@@ -11,12 +11,11 @@
 </body>
 
 <script type="text/javascript">
-  navigator.requestMIDIAccess().then(
-    (midiAccess) => {
-      console.log('Got MIDI access', midiAccess);
-    },
-    (errMsg) => console.log(`Failed to get MIDI access - ${errMsg}`)
-  );
+  navigator.requestMIDIAccess().then((midiAccess) => {
+    const input = midiAccess.inputs.values().next().value;
+
+    console.log(input);
+  });
 </script>
 
 </html>
