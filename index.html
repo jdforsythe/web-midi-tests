@@ -11,10 +11,47 @@
 </body>
 
 <script type="text/javascript">
+  const Commands = {
+    Continuous: 0xb0, // 176
+    NoteOn: 0x90, // 144
+  };
+
+  const Velocity = {
+    Off: 0x00, // 0
+    On: 0x7f, // 127
+  };
+
+  const ROW_MODULO = 0x10; // 16
+  const TOP_COLUMN_MODULO = 0x68; // 104
+
   navigator.requestMIDIAccess().then((midiAccess) => {
     const input = midiAccess.inputs.values().next().value;
 
-    console.log(input);
+    input.onmidimessage = ({ data }) => {
+      const [command, note, velocity] = data;
+
+      // only act when button is released
+      if (velocity !== Velocity.Off) {
+        return;
+      }
+
+      // top row of buttons
+      if (command === Commands.Continuous) {
+        console.log(`[TOP]  [${note % TOP_COLUMN_MODULO}]`);
+      }
+      else {
+        const x = note % ROW_MODULO;
+        const y = (note - x) / ROW_MODULO;
+
+        // side buttons are column 8
+        if (x === 8) {
+          console.log(`[SIDE] [${y}]`);
+        }
+        else {
+          console.log(`[PAD]  [${x}, ${y}]`);
+        }
+      }
+    }
   });
 </script>
 
