@@ -24,33 +24,43 @@
   const ROW_MODULO = 0x10; // 16
   const TOP_COLUMN_MODULO = 0x68; // 104
 
+  function getLaunchPadMiniButton(midiData) {
+    const [command, note, velocity] = data;
+
+    // only act when button is released
+    if (velocity !== Velocity.Off) {
+      return;
+    }
+
+    // top row of buttons
+    if (command === Commands.Continuous) {
+      return { position: 'TOP', index: note % TOP_COLUMN_MODULO, };
+    }
+    else {
+      const x = note % ROW_MODULO;
+      const y = (note - x) / ROW_MODULO;
+
+      // side buttons are column 8
+      if (x === 8) {
+        return { position: 'SIDE', index: y, };
+      }
+      else {
+        return { position: 'PAD', index: `[${x}, ${y}]` }
+      }
+    }
+  }
+
   navigator.requestMIDIAccess().then((midiAccess) => {
     const input = midiAccess.inputs.values().next().value;
 
     input.onmidimessage = ({ data }) => {
-      const [command, note, velocity] = data;
+      const button = getLaunchPadMiniButton(data);
 
-      // only act when button is released
-      if (velocity !== Velocity.Off) {
+      if (!button) {
         return;
       }
 
-      // top row of buttons
-      if (command === Commands.Continuous) {
-        console.log(`[TOP]  [${note % TOP_COLUMN_MODULO}]`);
-      }
-      else {
-        const x = note % ROW_MODULO;
-        const y = (note - x) / ROW_MODULO;
-
-        // side buttons are column 8
-        if (x === 8) {
-          console.log(`[SIDE] [${y}]`);
-        }
-        else {
-          console.log(`[PAD]  [${x}, ${y}]`);
-        }
-      }
+      console.log(`[${button.position}] ${button.index}`);
     }
   });
 </script>
