@@ -19,8 +19,6 @@ window.draw = function draw() {
 
   frameRate(1);
 
-  console.log('drawing');
-
   game.draw();
 }
 

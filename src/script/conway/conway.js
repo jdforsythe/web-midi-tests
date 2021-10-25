@@ -18,7 +18,6 @@ export class Game {
   }
 
   reset() {
-    console.log('reset');
     this.board = this._randomizeBoard();
     this.boardBuffer = this._getEmptyBoard();
     this.display.init();
@@ -48,9 +47,7 @@ export class Game {
   }
 
   draw() {
-    console.log('this.draw()');
     this.nextGeneration();
-    console.log(this.board);
     this.display.drawGame();
 
     for (let i = 0; i < NUM_ROWS; i++) {
