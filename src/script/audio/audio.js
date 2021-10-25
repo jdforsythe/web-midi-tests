@@ -70,6 +70,7 @@ function getAnalyzer() {
   if (!_analyzer) {
     _analyzer = getContext().createAnalyser();
     getMasterGain().connect(_analyzer);
+    _analyzer.fftSize = 512;
   }
 
   return _analyzer;
@@ -100,7 +101,7 @@ export function pauseSong() {
 
 export function getWaveform() {
   if (!_waveform) {
-    _waveform = new Float32Array(getAnalyzer().frequencyBinCount);
+    _waveform = new Uint8Array(getAnalyzer().frequencyBinCount);
   }
 
   return _waveform;
@@ -108,5 +109,5 @@ export function getWaveform() {
 
 export function startWaveformAnalysis() {
   requestAnimationFrame(startWaveformAnalysis);
-  getAnalyzer().getFloatTimeDomainData(getWaveform())
+  getAnalyzer().getByteFrequencyData(getWaveform())
 }
