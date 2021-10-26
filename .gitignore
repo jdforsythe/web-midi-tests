@@ -2,3 +2,5 @@ node_modules
 .cache
 .parcel-cache
 dist
+!src/script/sphero/spherov2/lib/dist
+!src/script/sphero/spherov2/lib/node_modules
