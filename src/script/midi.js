@@ -1,4 +1,4 @@
-export async function initialize(inputCb) {
+export async function initialize() {
   if (navigator.requestMIDIAccess) {
     return navigator.requestMIDIAccess().then(({ inputs, outputs }) => {
       console.log('MIDI access granted');
@@ -7,17 +7,10 @@ export async function initialize(inputCb) {
         throw new Error('Missing MIDI input or output device');
       }
 
-      const input = inputs.values().next().value;
+      const ins = Array.from(inputs.values());
+      const outs = Array.from(outputs.values());
 
-      if (inputCb) {
-        input.onmidimessage = inputCb;
-      }
-
-      // TODO: work with multiple MIDI devices attached
-      return {
-        input,
-        output: outputs.values().next().value,
-      };
+      return { inputs: ins, outputs: outs };
     });
   }
   else {

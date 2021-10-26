@@ -1,15 +1,26 @@
 import { initialize } from '../midi.js';
 import { LaunchpadOutput } from '../launchpad/output.js';
-import { getButtonFromMidiMessage } from '../launchpad/buttons.js';
+import { getButtonFromMidiMessage, BUTTON_TYPE, WHEEL_DIRECTION, ACCELEROMETER_AXIS, ACCELEROMETER_DIRECTION, BUTTON_STATE } from '../orbit/buttons.js';
 import { Direction, Game } from './snake.js';
 
 const INITIAL_FRAME_RATE = 2;
 
+const LAUNCHPAD_INPUT_ID = '-1688350944';
+const LAUNCHPAD_OUTPUT_ID = '1495228527';
+const ORBIT_INPUT_ID = '-1551502005';
+const ORBIT_OUTPUT_ID = '-1655773664';
+
 let game;
 
 window.setup = function setup() {
-  return initialize(handleMidiButtonPress).then(({ output }) => {
-    launchPadOutput = new LaunchpadOutput(output);
+  return initialize(handleMidiButtonPress).then(({ inputs, outputs }) => {
+    const launchPadMidiOutput = outputs.find((o) => o.id === LAUNCHPAD_OUTPUT_ID);
+    const orbitMidiInput = inputs.find((i) => i.id === ORBIT_INPUT_ID);
+
+    orbitMidiInput.onmidimessage = handleMidiButtonPress;
+
+    launchPadOutput = new LaunchpadOutput(launchPadMidiOutput);
+
     game = new Game(launchPadOutput)
   });
 }
@@ -19,9 +30,13 @@ window.draw = function draw() {
     return;
   }
 
-  frameRate(Math.floor(game.snake.state.length / 10) + INITIAL_FRAME_RATE);
+  frameRate(getFrameRate());
 
   game.draw();
+}
+
+function getFrameRate() {
+  return Math.floor(game.snake.state.length / 10) + INITIAL_FRAME_RATE;
 }
 
 const keyDirectionMap = {
@@ -35,25 +50,114 @@ window.keyPressed = function keyPressed() {
   game.handleDirectionChange(keyDirectionMap[keyCode]);
 }
 
-const buttonDirectionMap = {
-  0: { 8: Direction.Left },
-  1: { 8: Direction.Right },
-  8: {
-    6: Direction.Up,
-    7: Direction.Down,
-  },
-};
-
 function handleMidiButtonPress(msg) {
-  const button = getButtonFromMidiMessage(msg);
+  const button = getButtonFromMidiMessage(msg.data);
 
-  if (button.state === 1) {
+  let direction;
+
+  switch (button.type) {
+    case BUTTON_TYPE.KButton: {
+      if (button.index === 0) {
+        return game.reset();
+      }
+
+      return;
+    }
+
+    case BUTTON_TYPE.PadBank:
+    case BUTTON_TYPE.Bumper:
+    case BUTTON_TYPE.Wheel: {
+      return;
+    }
+
+    case BUTTON_TYPE.Pad: {
+      if (button.state === BUTTON_STATE.Pressed) {
+        return;
+      }
+
+      const [x, y] = button.coord;
+
+      if (y === 0) {
+        if (x === 0) {
+          direction = Direction.Left;
+          break;
+        }
+        else if (x === 1) {
+          direction = Direction.Right;
+          break;
+        }
+        else if (x === 3) {
+          direction = Direction.Up;
+          break;
+        }
+      }
+      else if (y === 1 && x === 3) {
+        direction = Direction.Down;
+        break;
+      }
+      
+      return;
+    }
+
+    case BUTTON_TYPE.Accelerometer: {
+      return handleAccelerometer(button);
+    }
+  }
+
+  if (direction) {
+    return game.handleDirectionChange(direction);
+  }
+}
+
+let _accelTimer;
+
+function clearTimer() {
+  clearTimeout(_accelTimer.timer);
+  _accelTimer = undefined;
+}
+
+function startTimer(direction) {
+  _accelTimer = {
+    direction,
+    timer: setTimeout(
+      () => {
+        return game.handleDirectionChange(direction);
+      },
+      1000 / getFrameRate(),
+    ),
+  };
+}
+
+function handleAccelerometer(button) {
+  if (button.velocity < 30) {
     return;
   }
 
-  if (button.x === 8 && button.y === 0) {
-    return game.reset();
+  let direction;
+  if (button.axis === ACCELEROMETER_AXIS.Horizontal) {
+    direction = button.direction === ACCELEROMETER_DIRECTION.Left ? Direction.Left : Direction.Right;
+  }
+  else {
+    direction = button.direction === ACCELEROMETER_DIRECTION.Forward ? Direction.Up : Direction.Down;
   }
 
-  return game.handleDirectionChange(buttonDirectionMap[button.x]?.[button.y]);
+  // start or restart timer
+  if (!_accelTimer || _accelTimer.direction === direction) {
+    if (_accelTimer) {
+      clearTimer();
+    }
+
+    return startTimer(direction);    
+  }
+
+  console.log(_accelTimer.direction === direction);
+
+  // new direction
+  const oldDirection = _accelTimer.direction;
+  clearTimer();
+
+  // send old direction immediately
+  game.handleDirectionChange(oldDirection);
+  // queue up new direction
+  startTimer(direction);
 }

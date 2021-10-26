@@ -5,10 +5,10 @@ const WIDTH = 800;
 const HEIGHT = 800;
 
 export const Direction = {
-  Up: 0,
-  Right: 1,
-  Down: 2,
-  Left: 3,
+  Up: 1,
+  Right: 2,
+  Down: 3,
+  Left: 4,
 };
 
 const DIRECTION_MAP = new Map([
