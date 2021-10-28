@@ -5,7 +5,7 @@ import { getButtonFromMidiMessage } from '../launchpad/buttons.js';
 import { COLORS } from '../launchpad/color.js';
 
 import { getSong, playSong, pauseSong, noteOff, noteOn, startWaveformAnalysis } from './audio.js';
-import { decreaseXRotation, increaseXRotation, visualize } from './visual.js';
+import { decreaseXRotation, increaseXRotation, decreaseYRotation, increaseYRotation, visualize } from './visual.js';
 
 let launchPadOutput;
 
@@ -15,23 +15,33 @@ function handleMidiButtonPress(msg) {
   const button = getButtonFromMidiMessage(msg);
   const note = msg.data[1];
 
-  if (msg.data[0] === 0xb0) {
+  if (msg.data[0] === 0xb0 && button.state === 0) {
     if (note === 0x68) {
+      console.log('decrease x rotation');
       decreaseXRotation();
       return;
     }
     else if (note === 0x69) {
+      console.log('increase x rotation');
       increaseXRotation();
+      return;
+    }
+    else if (note === 0x6a) {
+      console.log('decrease y rotation');
+      decreaseYRotation();
+      return;
+    }
+    else if (note === 0x6b) {
+      console.log('increase y rotation');
+      increaseYRotation();
       return;
     }
   }
 
   if (button.state === 1) {
-    noteOn(note);
     launchPadOutput.setColor(COLORS.Green, [button.x, button.y]);
   }
   else {
-    noteOff(note);
     setTimeout(() => launchPadOutput.setColor(COLORS.Green, [button.x, button.y], 0), 100);
   }
 }

@@ -7,12 +7,22 @@ let _yRotation = 0.0005;
 
 export function increaseXRotation() {
   _xRotation += 0.0005;
-  _yRotation += 0.0005;
+  console.log(`x rotation ${_xRotation}`);
 }
 
 export function decreaseXRotation() {
   _xRotation -= 0.0005;
+  console.log(`x rotation ${_xRotation}`);
+}
+
+export function increaseYRotation() {
+  _yRotation += 0.0005;
+  console.log(`y rotation ${_yRotation}`);
+}
+
+export function decreaseYRotation() {
   _yRotation -= 0.0005;
+  console.log(`y rotation ${_yRotation}`);
 }
 
 export function visualize() {

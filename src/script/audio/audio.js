@@ -1,76 +1,34 @@
-const context = new AudioContext();
-
+let context;
 let oscillators = {};
-
-const masterGain = context.createGain();
-masterGain.connect(context.destination);
-
-const analyzer = context.createAnalyser();
-masterGain.connect(analyzer);
-analyzer.fftSize = 512;
-
-let waveform = new Uint8Array(analyzer.frequencyBinCount);
-
-const song = {
-  song: new Audio('//zacharydenton.github.io/noisehack/static/zero_centre.mp3'),
-  playing: false,
-};
-
-song.song.crossOrigin = 'anonymous';
-
-const songSource = context.createMediaElementSource(song);
-songSource.connect(masterGain);
-
-song = { song, playing: false };
-
-
-function getOscillator() {
-  const osc = context.createOscillator();
-  osc.connect(context.destination);
-
-  return osc;
-}
-
-function getFrequencyFromNoteNumber(num) {
-  return Math.pow(2, (num - 69) / 12) * 440;
-}
-
-export function noteOn(midiNote) {
-  const frequency = getFrequencyFromNoteNumber(midiNote);
-
-  console.log(`playing ${frequency}`);
-
-  if (oscillators[midiNote]) {
-    return;
-  }
-
-  const oscillator = getOscillator();
-
-  oscillator.frequency.setTargetAtTime(frequency, context.currentTime, 0);
-
-  oscillator.start(0);
-  oscillators[midiNote] = oscillator;
-}
-
-export function noteOff(midiNote) {
-  const frequency = getFrequencyFromNoteNumber(midiNote);
-
-  console.log(`stopping ${frequency}`);
-
-  if (!oscillators[midiNote]) {
-    return;
-  }
-
-  oscillators[midiNote].stop(0);
-  oscillators[midiNote] = undefined;
-}
+let _song;
+let analyzer;
+let waveform;
 
 export function getSong() {
-  if (!song) {
+  if (!_song) {
+    context = new AudioContext();
 
-  }
+    const masterGain = context.createGain();
+    masterGain.connect(context.destination);
+    
+    analyzer = context.createAnalyser();
+    masterGain.connect(analyzer);
+    analyzer.fftSize = 512;
+    
+    waveform = new Uint8Array(analyzer.frequencyBinCount);
+    
+    _song = {
+      song: new Audio('//files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Shaolin_Dub/The_Urban_Chronicle/Shaolin_Dub_-_01_-_Concrete_Worries.mp3'),
+      playing: false,
+    };
+    
+    _song.song.crossOrigin = 'anonymous';
+    
+    const songSource = context.createMediaElementSource(_song.song);
+    songSource.connect(masterGain);
+      }
 
-  return song;
+  return _song;
 }
 
 export function playSong() {
@@ -81,6 +39,10 @@ export function playSong() {
 export function pauseSong() {
   getSong().song.pause();
   getSong().playing = false;
+}
+
+export function getWaveform() {
+  return waveform;
 }
 
 export function startWaveformAnalysis() {
