@@ -3,7 +3,7 @@ import { Game } from './conway.js';
 import { getButtonFromMidiMessage } from '../launchpad/buttons.js';
 import { initialize } from '../midi.js';
 
-
+let game;
 
 window.setup = function setup() {
   return initialize(handleMidiButtonPress).then(({ output }) => {
