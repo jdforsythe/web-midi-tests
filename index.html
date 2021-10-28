@@ -25,7 +25,7 @@
   const TOP_COLUMN_MODULO = 0x68; // 104
 
   function getLaunchPadMiniButton(midiData) {
-    const [command, note, velocity] = data;
+    const [command, note, velocity] = midiData;
 
     // only act when button is released
     if (velocity !== Velocity.Off) {

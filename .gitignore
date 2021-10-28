@@ -1,0 +1,5 @@
+dist
+node_modules
+src/script/sphero
+.parcel-cache
+.cache
