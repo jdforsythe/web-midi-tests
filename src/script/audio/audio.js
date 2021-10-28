@@ -1,26 +1,11 @@
-let _context;
-let _oscillator;
+const context = new AudioContext();
 
-function getContext() {
-  if (!_context) {
-    _context = new AudioContext();
-  }
+const oscillator = {
+  osc: context.createOscillator(),
+  started: false,
+};
 
-  return _context;
-}
-
-function getOscillator() {
-  if (!_oscillator) {
-    _context = getContext();
-
-    const osc = _context.createOscillator();
-    osc.connect(_context.destination);
-
-    _oscillator = { osc, started: false };
-  }
-
-  return _oscillator;
-}
+_oscillator.osc.connect(_context.destination);
 
 function getFrequencyFromNoteNumber(num) {
   return Math.pow(2, (num - 69) / 12) * 440;
@@ -30,9 +15,6 @@ export function noteOn(midiNote) {
   const frequency = getFrequencyFromNoteNumber(midiNote);
 
   console.log(`playing ${frequency}`);
-
-  const context = getContext();
-  const oscillator = getOscillator();
 
   oscillator.osc.frequency.setTargetAtTime(frequency, context.currentTime, 0);
 
@@ -47,6 +29,6 @@ export function noteOn(midiNote) {
 
 export function noteOff() {
   console.log('stopping');
-  getContext().suspend();
+  context.suspend();
 }
 
