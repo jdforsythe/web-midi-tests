@@ -1,23 +1,32 @@
-let _context;
-let _oscillators = {};
-let _masterGain;
-let _analyzer;
-let _waveform;
-let _song;
+const context = new AudioContext();
 
-function getContext() {
-  if (!_context) {
-    _context = new AudioContext();
-  }
+let oscillators = {};
 
-  return _context;
-}
+const masterGain = context.createGain();
+masterGain.connect(context.destination);
+
+const analyzer = context.createAnalyser();
+masterGain.connect(analyzer);
+analyzer.fftSize = 512;
+
+let waveform = new Uint8Array(analyzer.frequencyBinCount);
+
+const song = {
+  song: new Audio('//zacharydenton.github.io/noisehack/static/zero_centre.mp3'),
+  playing: false,
+};
+
+song.song.crossOrigin = 'anonymous';
+
+const songSource = context.createMediaElementSource(song);
+songSource.connect(masterGain);
+
+song = { song, playing: false };
+
 
 function getOscillator() {
-  _context = getContext();
-
-  const osc = _context.createOscillator();
-  osc.connect(_context.destination);
+  const osc = context.createOscillator();
+  osc.connect(context.destination);
 
   return osc;
 }
@@ -31,17 +40,16 @@ export function noteOn(midiNote) {
 
   console.log(`playing ${frequency}`);
 
-  if (_oscillators[midiNote]) {
+  if (oscillators[midiNote]) {
     return;
   }
 
-  const context = getContext();
   const oscillator = getOscillator();
 
   oscillator.frequency.setTargetAtTime(frequency, context.currentTime, 0);
 
   oscillator.start(0);
-  _oscillators[midiNote] = oscillator;
+  oscillators[midiNote] = oscillator;
 }
 
 export function noteOff(midiNote) {
@@ -49,44 +57,20 @@ export function noteOff(midiNote) {
 
   console.log(`stopping ${frequency}`);
 
-  if (!_oscillators[midiNote]) {
+  if (!oscillators[midiNote]) {
     return;
   }
 
-  _oscillators[midiNote].stop(0);
-  _oscillators[midiNote] = undefined;
-}
-
-function getMasterGain() {
-  if (!_masterGain) {
-    _masterGain = getContext().createGain();
-    _masterGain.connect(getContext().destination);
-  }
-
-  return _masterGain;
-}
-
-function getAnalyzer() {
-  if (!_analyzer) {
-    _analyzer = getContext().createAnalyser();
-    getMasterGain().connect(_analyzer);
-    _analyzer.fftSize = 512;
-  }
-
-  return _analyzer;
+  oscillators[midiNote].stop(0);
+  oscillators[midiNote] = undefined;
 }
 
 export function getSong() {
-  if (!_song) {
-    const song = new Audio('//zacharydenton.github.io/noisehack/static/zero_centre.mp3');
-    song.crossOrigin = 'anonymous';
-    const songSource = getContext().createMediaElementSource(song);
-    songSource.connect(getMasterGain());
+  if (!song) {
 
-    _song = { song, playing: false };
   }
 
-  return _song;
+  return song;
 }
 
 export function playSong() {
@@ -99,15 +83,7 @@ export function pauseSong() {
   getSong().playing = false;
 }
 
-export function getWaveform() {
-  if (!_waveform) {
-    _waveform = new Uint8Array(getAnalyzer().frequencyBinCount);
-  }
-
-  return _waveform;
-}
-
 export function startWaveformAnalysis() {
   requestAnimationFrame(startWaveformAnalysis);
-  getAnalyzer().getByteFrequencyData(getWaveform())
+  analyzer.getByteFrequencyData(waveform);
 }
