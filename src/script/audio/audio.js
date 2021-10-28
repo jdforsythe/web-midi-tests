@@ -5,7 +5,7 @@ const oscillator = {
   started: false,
 };
 
-_oscillator.osc.connect(_context.destination);
+oscillator.osc.connect(context.destination);
 
 function getFrequencyFromNoteNumber(num) {
   return Math.pow(2, (num - 69) / 12) * 440;
